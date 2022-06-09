@@ -17,6 +17,7 @@ import org.opencv.imgproc.Imgproc
 import org.opencv.android.CameraBridgeViewBase.CvCameraViewFrame
 import org.opencv.core.*
 import org.jetbrains.kotlinx.multik.api.*
+import org.jetbrains.kotlinx.multik.api.math.Math as mkmath
 
 //import org.jetbrains.kotlinx.multik
 
@@ -160,8 +161,6 @@ class MainActivity : Activity(), OnTouchListener, CvCameraViewListener2 {
             val out_image = Mat(mRgba_certain.size(), CvType.CV_64F)
             Imgproc.cvtColor(mRgba_certain, out_image, Imgproc.COLOR_RGB2HSV_FULL)
 
-
-
             val gray_image = Mat(mRgba_certain.size(), CvType.CV_64FC4)
             val color_transform = Mat(4, 4, CvType.CV_64F, Scalar(0.0))
 //            val color_transform = Mat.d
@@ -175,6 +174,7 @@ class MainActivity : Activity(), OnTouchListener, CvCameraViewListener2 {
             Imgproc.cvtColor(gray_image, gray_image, Imgproc.COLOR_GRAY2RGB)
 
             val a = mk.ndarray(mk[1, 2, 3])
+
             println("here: $a")
 
 //            MultiK
