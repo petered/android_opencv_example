@@ -15,6 +15,10 @@ import com.example.opencvexampletry3.R
 import org.opencv.android.OpenCVLoader
 import org.opencv.imgproc.Imgproc
 import org.opencv.android.CameraBridgeViewBase.CvCameraViewFrame
+import org.opencv.core.*
+import org.jetbrains.kotlinx.multik.api.*
+
+//import org.jetbrains.kotlinx.multik
 
 class MainActivity : Activity(), OnTouchListener, CvCameraViewListener2 {
     private var mIsColorSelected = false
@@ -167,9 +171,13 @@ class MainActivity : Activity(), OnTouchListener, CvCameraViewListener2 {
             color_transform.put(3, 3, 1.0)
 
 
-            Imgproc.cvtColor(gray_image, gray_image, Imgproc.COLOR_RGB2GRAY)
+            Imgproc.cvtColor(mRgba_certain, gray_image, Imgproc.COLOR_RGB2GRAY)
             Imgproc.cvtColor(gray_image, gray_image, Imgproc.COLOR_GRAY2RGB)
 
+            val a = mk.ndarray(mk[1, 2, 3])
+            println("here: $a")
+
+//            MultiK
 //            Core.multiply(mRgba_certain, gray_image, mRgba_certain)
 
 
