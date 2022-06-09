@@ -15,7 +15,6 @@ import com.example.opencvexampletry3.R
 import org.opencv.android.OpenCVLoader
 import org.opencv.imgproc.Imgproc
 import org.opencv.android.CameraBridgeViewBase.CvCameraViewFrame
-import org.opencv.core.*
 
 class MainActivity : Activity(), OnTouchListener, CvCameraViewListener2 {
     private var mIsColorSelected = false
@@ -142,14 +141,62 @@ class MainActivity : Activity(), OnTouchListener, CvCameraViewListener2 {
     override fun onCameraFrame(inputFrame: CvCameraViewFrame): Mat {
         mRgba = inputFrame.rgba()
         if (mIsColorSelected) {
-            mDetector!!.process(mRgba)
-            val contours = mDetector!!.contours
-            Log.e(TAG, "Contours count: " + contours.size)
-            Imgproc.drawContours(mRgba, contours, -1, CONTOUR_COLOR)
-            val colorLabel = mRgba!!.submat(4, 68, 4, 68)
-            colorLabel.setTo(mBlobColorRgba)
+            val mRgba_certain = mRgba!!
+            val norm = Math.pow(Math.pow(mBlobColorRgba!!.`val`[0], 2.0) +
+                    Math.pow(mBlobColorRgba!!.`val`[1], 2.0) +
+                    Math.pow(mBlobColorRgba!!.`val`[2], 2.0), 0.5)
+            val filter = DoubleArray(3){mBlobColorRgba!!.`val`[it]/norm}
+//            val filter = DoubleArray(3){if (it==2) 1.0 else 0.0}
+//            Core.transform()
+            println("Setting filter from ${mBlobColorRgba!!.`val`.contentToString()} to ${filter.contentToString()} - norm was $norm")
+
+//            val color_transform = Mat(4, 4, CvType.CV_64F, Scalar(doubleArrayOf(1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0)))
+//            val outputImage = Mat()
+//            val gray_image = Mat(mRgba_certain.size(), CvType.CV_64FC4)
+            val out_image = Mat(mRgba_certain.size(), CvType.CV_64F)
+            Imgproc.cvtColor(mRgba_certain, out_image, Imgproc.COLOR_RGB2HSV_FULL)
+
+
+
+            val gray_image = Mat(mRgba_certain.size(), CvType.CV_64FC4)
+            val color_transform = Mat(4, 4, CvType.CV_64F, Scalar(0.0))
+//            val color_transform = Mat.d
+            color_transform.put(0, 0, filter[0])
+            color_transform.put(1, 1, filter[1])
+            color_transform.put(2, 2, filter[2])
+            color_transform.put(3, 3, 1.0)
+
+
+            Imgproc.cvtColor(gray_image, gray_image, Imgproc.COLOR_RGB2GRAY)
+            Imgproc.cvtColor(gray_image, gray_image, Imgproc.COLOR_GRAY2RGB)
+
+//            Core.multiply(mRgba_certain, gray_image, mRgba_certain)
+
+
+//            Core.multiply(mRgba_certain, filter, mRgba_certain)
+//            mRgba_certain.let{}
+//            Imgproc.color
+//            Imgproc.filter2D(mRgba, mRgba, 3, mBlobColorRgba.m)
+//            Imgproc.filter2D(mRgba, mRgba, 1, mBlobColorRgba) //            for (i in 0 until mRgba_certain.height()){
+//                for (j in 0 until mRgba_certain.width()){
+//                    for (c in 0 until 3){
+//                        mRgba!!.get(i, j)[c] *= filter[c]
+//                    }
+//                }
+//            }
+
+//            val contours = mDetector!!.process(mRgba)
+////            val contours = mDetector!!.contours
+//
+//
+//
+//            Log.e(TAG, "Contours count: " + contours.size)
+//            Imgproc.drawContours(mRgba, contours, -1, CONTOUR_COLOR)
+//            val colorLabel = mRgba!!.submat(4, 68, 4, 68)
+//            colorLabel.setTo(mBlobColorRgba)
             val spectrumLabel = mRgba!!.submat(4, 4 + mSpectrum!!.rows(), 70, 70 + mSpectrum!!.cols())
             mSpectrum!!.copyTo(spectrumLabel)
+            return gray_image
         }
         return mRgba!!
     }

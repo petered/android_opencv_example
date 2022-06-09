@@ -56,7 +56,7 @@ class ColorBlobDetector {
         mMinContourArea = area
     }
 
-    fun process(rgbaImage: Mat?) {
+    fun process(rgbaImage: Mat?): List<MatOfPoint> {
         Imgproc.pyrDown(rgbaImage, mPyrDownMat)
         Imgproc.pyrDown(mPyrDownMat, mPyrDownMat)
         Imgproc.cvtColor(mPyrDownMat, mHsvMat, Imgproc.COLOR_RGB2HSV_FULL)
@@ -90,6 +90,7 @@ class ColorBlobDetector {
                 mContours.add(contour)
             }
         }
+        return mContours
     }
 
     val contours: List<MatOfPoint>
