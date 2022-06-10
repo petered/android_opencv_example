@@ -153,119 +153,58 @@ class MainActivity : Activity(), OnTouchListener, CvCameraViewListener2 {
         return false // don't need subsequent touch events
     }
 
+//    override fun onCameraFrame(inputFrame: CvCameraViewFrame): Mat {
+//        val rgbaMat: Mat = inputFrame.rgba()!!
+//        val lets_have_a_memory_leak = true
+//        if (lets_have_a_memory_leak) {
+//            val unused_leaker = Mat.zeros(rgbaMat.size(), rgbaMat.type())
+//        }
+//        return rgbaMat
+//    }
+
+
+    var out_image: Mat? = null
+    var hue_img: Mat? = null
+
     override fun onCameraFrame(inputFrame: CvCameraViewFrame): Mat {
         mRgba = inputFrame.rgba()
         if (mIsColorSelected) {
+
+            // Get the filter params
             val mRgba_certain = mRgba!!
             val norm = Math.pow(Math.pow(mBlobColorRgba!!.`val`[0], 2.0) +
                     Math.pow(mBlobColorRgba!!.`val`[1], 2.0) +
                     Math.pow(mBlobColorRgba!!.`val`[2], 2.0), 0.5)
             val filter = DoubleArray(3){mBlobColorRgba!!.`val`[it]/norm}
-//            val filter = DoubleArray(3){if (it==2) 1.0 else 0.0}
-//            Core.transform()
             println("Setting filter from ${mBlobColorRgba!!.`val`.contentToString()} to ${filter.contentToString()} - norm was $norm")
 
-//            val color_transform = Mat(4, 4, CvType.CV_64F, Scalar(doubleArrayOf(1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0)))
-//            val outputImage = Mat()
-//            val gray_image = Mat(mRgba_certain.size(), CvType.CV_64FC4)
-
+            if (out_image == null)
+                out_image = Mat(mRgba_certain.size(), CvType.CV_64F)
+//            val out_image = Mat(mRgba_certain.size(), CvType.CV_64F)
 //            val out_image = Mat()
-//            val out_image = Mat()
-
-
-            val out_image = Mat(mRgba_certain.size(), CvType.CV_64F)
             Imgproc.cvtColor(mRgba_certain, out_image, Imgproc.COLOR_RGB2HSV_FULL)
 
-//            val gray_image = Mat(mRgba_certain.size(), CvType.CV_64FC4)
-//            val color_transform = Mat(4, 4, CvType.CV_64F, Scalar(0.0))
-////            val color_transform = Mat.d
-//            color_transform.put(0, 0, filter[0])
-//            color_transform.put(1, 1, filter[1])
-//            color_transform.put(2, 2, filter[2])
-//            color_transform.put(3, 3, 1.0)
-//            Imgproc.cvtColor(mRgba_certain, gray_image, Imgproc.COLOR_RGB2GRAY)
-//            Imgproc.cvtColor(gray_image, gray_image, Imgproc.COLOR_GRAY2RGB)
-
-//            out_image
-
-//            val a = mk.ndarray(mk[1, 2, 3])
-//
-//            println("here: $a")
-
-//            val dumped = mRgba_certain.dump()
-//            val a2 = Nd4j.zeros(2, 3)
-//
-//            extractCh
-//            extractCh
-
-//            target_hue = scalar_convert_color(mBlobColorHsv)
-
-
-
-            val hue_img = Mat(mRgba_certain.size(), CvType.CV_64F)
+            // Extract the hue image, make a heatmap
+            if (hue_img == null){hue_img = Mat()}
             Core.extractChannel(out_image, hue_img, 0)
-            hue_img.convertTo(hue_img, CvType.CV_32F)
-//            Core.subtract(hue_img, Scalar(100.0), hue_img)
-//            val target_hue = mBlobColorHsv!!.`val`[0]
 
-
-//            val target_hue = 20.0
+            hue_img!!.convertTo(hue_img, CvType.CV_32F)
             val target_hue = scalar_convert_color(mBlobColorRgba!!, Imgproc.COLOR_RGB2HSV_FULL).`val`[0]
             println("Target Hue: $target_hue")
             Core.absdiff(hue_img, Scalar(target_hue), hue_img)
             Core.divide(hue_img, Scalar(-10.0), hue_img)
             Core.exp(hue_img, hue_img)
 
-//            Core.multiply(hue_img, Scalar(255.0), hue_img)
-//            hue_img.convertTo(out_image, CvType.CV_8UC3)
+            // Combine heatmap with RGB to make output image
             Imgproc.cvtColor(hue_img, hue_img, Imgproc.COLOR_GRAY2RGBA)  // Just  copy channel
-            hue_img.convertTo(hue_img, CvType.CV_32FC4)
-
+            hue_img!!.convertTo(hue_img, CvType.CV_32FC4)
             mRgba_certain.convertTo(out_image, CvType.CV_32FC4)
             Core.multiply(out_image, hue_img, out_image)
-            out_image.convertTo(out_image, CvType.CV_8UC3)
-//            val out_image =
-
-//            val real_out_image = Mat.zeros(mRgba_certain.size(), CvType.CV_8UC3)
-
-
-//            Core.multiply(mRgba_certain, hue_img, out_image)
-//
+            out_image!!.convertTo(out_image, CvType.CV_8UC3)
             println("Here")
-
-//            val loader = NativeImageLoader()
-//            val arr = loader.asMatrix(out_image)
-//            val hue = arr[NDArrayIndex.point(0), NDArrayIndex.point(0)]
-//            println("nd4j array hape: ${arr.shape()}")
-
-//            MultiK
-//            Core.multiply(mRgba_certain, gray_image, mRgba_certain)
-
-
-//            Core.multiply(mRgba_certain, filter, mRgba_certain)
-//            mRgba_certain.let{}
-//            Imgproc.color
-//            Imgproc.filter2D(mRgba, mRgba, 3, mBlobColorRgba.m)
-//            Imgproc.filter2D(mRgba, mRgba, 1, mBlobColorRgba) //            for (i in 0 until mRgba_certain.height()){
-//                for (j in 0 until mRgba_certain.width()){
-//                    for (c in 0 until 3){
-//                        mRgba!!.get(i, j)[c] *= filter[c]
-//                    }
-//                }
-//            }
-
-//            val contours = mDetector!!.process(mRgba)
-////            val contours = mDetector!!.contours
-//
-//
-//
-//            Log.e(TAG, "Contours count: " + contours.size)
-//            Imgproc.drawContours(mRgba, contours, -1, CONTOUR_COLOR)
-//            val colorLabel = mRgba!!.submat(4, 68, 4, 68)
-//            colorLabel.setTo(mBlobColorRgba)
             val spectrumLabel = mRgba!!.submat(4, 4 + mSpectrum!!.rows(), 70, 70 + mSpectrum!!.cols())
             mSpectrum!!.copyTo(spectrumLabel)
-            return out_image
+            return out_image!!
         }
         return mRgba!!
     }
