@@ -22,6 +22,8 @@ import android.hardware.Camera
 //import org.jetbrains.kotlinx.multik
 
 class MainActivity : Activity(), OnTouchListener, CvCameraViewListener2 {
+
+
     private var mIsColorSelected = false
     private var mRgba: Mat? = null
     private var mBlobColorRgba: Scalar? = null
@@ -61,6 +63,7 @@ class MainActivity : Activity(), OnTouchListener, CvCameraViewListener2 {
 
     }
 
+    private var colourFilter: HueSaturationFilter? = null
 
 //    fun surfaceDestroyed(holder: SurfaceHolder?) {
 //        camera.stopPreview()
@@ -122,36 +125,44 @@ class MainActivity : Activity(), OnTouchListener, CvCameraViewListener2 {
         touchedRect.width = if (x + 4 < cols) x + 4 - touchedRect.x else cols - touchedRect.x
         touchedRect.height = if (y + 4 < rows) y + 4 - touchedRect.y else rows - touchedRect.y
         val touchedRegionRgba = mRgba!!.submat(touchedRect)
-        val touchedRegionHsv = Mat()
-        Imgproc.cvtColor(touchedRegionRgba, touchedRegionHsv, Imgproc.COLOR_RGB2HSV_FULL)
 
-        // Calculate average color of touched region
-//        println("N Elements ${touchedRegionHsv}")
-        val mBlobColorHsv = Core.sumElems(touchedRegionHsv)
-        println("Blob Color: $mBlobColorHsv")
-        val pointCount = (touchedRect.width * touchedRect.height).toDouble()
-        println("Pointcount Value: $pointCount")
-        for (i in mBlobColorHsv.`val`.indices) mBlobColorHsv.`val`[i] /= pointCount
-        mBlobColorRgba = converScalarHsv2Rgba(mBlobColorHsv)
-        Log.i(
-            TAG,
-            "Touched rgba color: (" + mBlobColorRgba!!.`val`[0] + ", " + mBlobColorRgba!!.`val`[1] +
-                    ", " + mBlobColorRgba!!.`val`[2] + ", " + mBlobColorRgba!!.`val`[3] + ")"
-        )
-        mDetector!!.setHsvColor(mBlobColorHsv)
-        Imgproc.resize(
-            mDetector!!.spectrum,
-            mSpectrum,
-            SPECTRUM_SIZE,
-            0.0,
-            0.0,
-            Imgproc.INTER_LINEAR_EXACT
-        )
-        mIsColorSelected = true
-        touchedRegionRgba.release()
-        touchedRegionHsv.release()
-        return false // don't need subsequent touch events
+
+        colourFilter = HueSaturationFilter.fromPatch(touchedRegionRgba)
+        return false
     }
+
+//
+//
+//        val touchedRegionHsv = Mat()
+//        Imgproc.cvtColor(touchedRegionRgba, touchedRegionHsv, Imgproc.COLOR_RGB2HSV_FULL)
+//
+//        // Calculate average color of touched region
+////        println("N Elements ${touchedRegionHsv}")
+//        val mBlobColorHsv = Core.sumElems(touchedRegionHsv)
+//        println("Blob Color: $mBlobColorHsv")
+//        val pointCount = (touchedRect.width * touchedRect.height).toDouble()
+//        println("Pointcount Value: $pointCount")
+//        for (i in mBlobColorHsv.`val`.indices) mBlobColorHsv.`val`[i] /= pointCount
+//        mBlobColorRgba = converScalarHsv2Rgba(mBlobColorHsv)
+//        Log.i(
+//            TAG,
+//            "Touched rgba color: (" + mBlobColorRgba!!.`val`[0] + ", " + mBlobColorRgba!!.`val`[1] +
+//                    ", " + mBlobColorRgba!!.`val`[2] + ", " + mBlobColorRgba!!.`val`[3] + ")"
+//        )
+//        mDetector!!.setHsvColor(mBlobColorHsv)
+//        Imgproc.resize(
+//            mDetector!!.spectrum,
+//            mSpectrum,
+//            SPECTRUM_SIZE,
+//            0.0,
+//            0.0,
+//            Imgproc.INTER_LINEAR_EXACT
+//        )
+//        mIsColorSelected = true
+//        touchedRegionRgba.release()
+//        touchedRegionHsv.release()
+//        return false // don't need subsequent touch events
+//    }
 
 //    override fun onCameraFrame(inputFrame: CvCameraViewFrame): Mat {
 //        val rgbaMat: Mat = inputFrame.rgba()!!
@@ -163,48 +174,49 @@ class MainActivity : Activity(), OnTouchListener, CvCameraViewListener2 {
 //    }
 
 
-    var out_image: Mat? = null
-    var hue_img: Mat? = null
+//    var out_image: Mat? = null
+//    var hue_img: Mat? = null
 
     override fun onCameraFrame(inputFrame: CvCameraViewFrame): Mat {
         mRgba = inputFrame.rgba()
-        if (mIsColorSelected) {
-
-            // Get the filter params
-            val mRgba_certain = mRgba!!
-            val norm = Math.pow(Math.pow(mBlobColorRgba!!.`val`[0], 2.0) +
-                    Math.pow(mBlobColorRgba!!.`val`[1], 2.0) +
-                    Math.pow(mBlobColorRgba!!.`val`[2], 2.0), 0.5)
-            val filter = DoubleArray(3){mBlobColorRgba!!.`val`[it]/norm}
-            println("Setting filter from ${mBlobColorRgba!!.`val`.contentToString()} to ${filter.contentToString()} - norm was $norm")
-
-            if (out_image == null)
-                out_image = Mat(mRgba_certain.size(), CvType.CV_64F)
-//            val out_image = Mat(mRgba_certain.size(), CvType.CV_64F)
-//            val out_image = Mat()
-            Imgproc.cvtColor(mRgba_certain, out_image, Imgproc.COLOR_RGB2HSV_FULL)
-
-            // Extract the hue image, make a heatmap
-            if (hue_img == null){hue_img = Mat()}
-            Core.extractChannel(out_image, hue_img, 0)
-
-            hue_img!!.convertTo(hue_img, CvType.CV_32F)
-            val target_hue = scalar_convert_color(mBlobColorRgba!!, Imgproc.COLOR_RGB2HSV_FULL).`val`[0]
-            println("Target Hue: $target_hue")
-            Core.absdiff(hue_img, Scalar(target_hue), hue_img)
-            Core.divide(hue_img, Scalar(-10.0), hue_img)
-            Core.exp(hue_img, hue_img)
-
-            // Combine heatmap with RGB to make output image
-            Imgproc.cvtColor(hue_img, hue_img, Imgproc.COLOR_GRAY2RGBA)  // Just  copy channel
-            hue_img!!.convertTo(hue_img, CvType.CV_32FC4)
-            mRgba_certain.convertTo(out_image, CvType.CV_32FC4)
-            Core.multiply(out_image, hue_img, out_image)
-            out_image!!.convertTo(out_image, CvType.CV_8UC3)
-            println("Here")
-            val spectrumLabel = mRgba!!.submat(4, 4 + mSpectrum!!.rows(), 70, 70 + mSpectrum!!.cols())
-            mSpectrum!!.copyTo(spectrumLabel)
-            return out_image!!
+        if (colourFilter != null) {
+            return colourFilter!!.filter_rgb_image(mRgba!!)
+//
+//            // Get the filter params
+//            val mRgba_certain = mRgba!!
+//            val norm = Math.pow(Math.pow(mBlobColorRgba!!.`val`[0], 2.0) +
+//                    Math.pow(mBlobColorRgba!!.`val`[1], 2.0) +
+//                    Math.pow(mBlobColorRgba!!.`val`[2], 2.0), 0.5)
+//            val filter = DoubleArray(3){mBlobColorRgba!!.`val`[it]/norm}
+//            println("Setting filter from ${mBlobColorRgba!!.`val`.contentToString()} to ${filter.contentToString()} - norm was $norm")
+//
+//            if (out_image == null)
+//                out_image = Mat(mRgba_certain.size(), CvType.CV_64F)
+////            val out_image = Mat(mRgba_certain.size(), CvType.CV_64F)
+////            val out_image = Mat()
+//            Imgproc.cvtColor(mRgba_certain, out_image, Imgproc.COLOR_RGB2HSV_FULL)
+//
+//            // Extract the hue image, make a heatmap
+//            if (hue_img == null){hue_img = Mat()}
+//            Core.extractChannel(out_image, hue_img, 0)
+//
+//            hue_img!!.convertTo(hue_img, CvType.CV_32F)
+//            val target_hue = scalar_convert_color(mBlobColorRgba!!, Imgproc.COLOR_RGB2HSV_FULL).`val`[0]
+//            println("Target Hue: $target_hue")
+//            Core.absdiff(hue_img, Scalar(target_hue), hue_img)
+//            Core.divide(hue_img, Scalar(-10.0), hue_img)
+//            Core.exp(hue_img, hue_img)
+//
+//            // Combine heatmap with RGB to make output image
+//            Imgproc.cvtColor(hue_img, hue_img, Imgproc.COLOR_GRAY2RGBA)  // Just  copy channel
+//            hue_img!!.convertTo(hue_img, CvType.CV_32FC4)
+//            mRgba_certain.convertTo(out_image, CvType.CV_32FC4)
+//            Core.multiply(out_image, hue_img, out_image)
+//            out_image!!.convertTo(out_image, CvType.CV_8UC3)
+//            println("Here")
+//            val spectrumLabel = mRgba!!.submat(4, 4 + mSpectrum!!.rows(), 70, 70 + mSpectrum!!.cols())
+//            mSpectrum!!.copyTo(spectrumLabel)
+//            return out_image!!
         }
         return mRgba!!
     }

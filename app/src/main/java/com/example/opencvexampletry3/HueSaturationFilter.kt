@@ -6,9 +6,8 @@ import org.opencv.core.Mat
 import org.opencv.core.Scalar
 import org.opencv.imgproc.Imgproc
 
-val i = 10
 
-class HueValueFilter(
+class HueSaturationFilter(
     val huePeak: Double,
     val satPeak: Double,
     val hueWidth: Double = 10.0,
@@ -18,14 +17,14 @@ class HueValueFilter(
 //    constructor (patch: Mat): this(peakHue=patch.get(0, 0)[0], 3.0){}
 
     companion object {
-        operator fun invoke(patchRgba: Mat): HueValueFilter{
+        fun fromPatch(patchRgba: Mat): HueSaturationFilter{
             val touchedRegionHsv = Mat()
             Imgproc.cvtColor(patchRgba, touchedRegionHsv, Imgproc.COLOR_RGB2HSV_FULL)
             val patchHue = Mat()
             val patchSat = Mat()
             Core.extractChannel(touchedRegionHsv, patchHue, 0)
             Core.extractChannel(touchedRegionHsv, patchSat, 1)
-            return HueValueFilter(
+            return HueSaturationFilter(
                 huePeak = Core.mean(patchHue).`val`[0],
                 satPeak = Core.mean(patchSat).`val`[1]
             )
@@ -42,39 +41,17 @@ class HueValueFilter(
     }
 
 
-    fun filter_rgb_image(rgb_image: Mat): Mat{
+    fun filter_rgb_image(imageRGB: Mat): Mat{
 
-        val imageHSV = Mat(rgb_image.size(), CvType.CV_64F)
-        Imgproc.cvtColor(rgb_image, imageHSV, Imgproc.COLOR_RGB2HSV_FULL)
+        val imageHSV = Mat(imageRGB.size(), CvType.CV_64F)
+        Imgproc.cvtColor(imageRGB, imageHSV, Imgproc.COLOR_RGB2HSV_FULL)
 
-        val hue_img = Mat(rgb_image.size(), CvType.CV_64F)
+        val hue_img = Mat()
         Core.extractChannel(imageHSV, hue_img, 0)
 
         val hue_heatmap = distanceImageToHeatmap(hue_img, peakValue = huePeak, width=hueWidth)
 
-
-
-
-
-//            Core.multiply(hue_img, Scalar(255.0), hue_img)
-//            hue_img.convertTo(out_image, CvType.CV_8UC3)
-        Imgproc.cvtColor(hue_img, hue_img, Imgproc.COLOR_GRAY2RGBA)  // Just  copy channel
-//        hue_img.convertTo(hue_img, CvType.CV_32FC4)
-
-        rgb_image.convertTo(imageHSV, CvType.CV_32FC4)
-        Core.multiply(imageHSV, hue_img, imageHSV)
-        imageHSV.convertTo(imageHSV, CvType.CV_8UC3)
-
-        val result = shadeImageByHeatmap(imageRGBA = rgb_image, heatmap = hue_heatmap, inplace = true)
-
-//            val out_image =
-
-//            val real_out_image = Mat.zeros(mRgba_certain.size(), CvType.CV_8UC3)
-
-
-//            Core.multiply(mRgba_certain, hue_img, out_image)
-//
-        println("Here")
+        val result = shadeImageByHeatmap(imageRGBA = imageRGB, heatmap = hue_heatmap, inplace = true)
 
         return result
     }
