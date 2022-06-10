@@ -14,7 +14,16 @@ class HueSaturationFilter(
     val satWidth: Double = 30.0,
     ) {
 
+    private var outImageAlloc: Mat? = null
+    private var heatMapAlloc: Mat? = null
+    private var heatmapColorAlloc: Mat? = null
 //    constructor (patch: Mat): this(peakHue=patch.get(0, 0)[0], 3.0){}
+
+    init {
+        outImageAlloc = Mat()
+        heatMapAlloc = Mat()
+        heatmapColorAlloc = Mat()
+    }
 
     companion object {
         fun fromPatch(patchRgba: Mat): HueSaturationFilter{
@@ -43,16 +52,17 @@ class HueSaturationFilter(
 
     fun filter_rgb_image(imageRGB: Mat): Mat{
 
-        val imageHSV = Mat(imageRGB.size(), CvType.CV_64F)
+//        val imageHSV = Mat(imageRGB.size(), CvType.CV_64F)
+        val imageHSV = outImageAlloc
         Imgproc.cvtColor(imageRGB, imageHSV, Imgproc.COLOR_RGB2HSV_FULL)
 
-        val hue_img = Mat()
-        Core.extractChannel(imageHSV, hue_img, 0)
-
-        val hue_heatmap = distanceImageToHeatmap(hue_img, peakValue = huePeak, width=hueWidth)
-
-        val result = shadeImageByHeatmap(imageRGBA = imageRGB, heatmap = hue_heatmap, inplace = true)
-
+//        if (outImageAlloc==null) {outImageAlloc = Mat()}
+//        if (heatMapAlloc==null) {heatMapAlloc = Mat()}
+//
+        Core.extractChannel(imageHSV, heatMapAlloc, 0)
+        val hue_heatmap = distanceImageToHeatmap(heatMapAlloc!!, peakValue = huePeak, width=hueWidth, inplace = true)
+        val result = shadeImageByHeatmap(imageRGBA = imageRGB, heatmap = hue_heatmap,
+            result_alloc = outImageAlloc, heatmapColorAlloc = heatmapColorAlloc)
         return result
     }
 
@@ -79,10 +89,10 @@ fun distanceImageToHeatmap(singleChannelImage: Mat, peakValue: Double, width: Do
 
 
 /** Convert a heatmap (a single channel float image), to a color heatmap (with 4 channels for RGBA) */
-fun heatmapToColorHeatmap(heatmap_image: Mat, inplace: Boolean = false): Mat{
-    val colourHeatmap = if (inplace) heatmap_image else Mat()
+fun heatmapToColorHeatmap(heatmap_image: Mat, colourHeatmapAlloc: Mat? = null): Mat{
+    val colourHeatmap = colourHeatmapAlloc ?: Mat()
     Imgproc.cvtColor(heatmap_image, colourHeatmap, Imgproc.COLOR_GRAY2RGBA)  // Just  copy channel
-    heatmap_image.convertTo(colourHeatmap, CvType.CV_32F)
+    colourHeatmap.convertTo(colourHeatmap, CvType.CV_32F)
     return colourHeatmap
 }
 
@@ -90,11 +100,12 @@ fun heatmapToColorHeatmap(heatmap_image: Mat, inplace: Boolean = false): Mat{
 fun shadeImageByHeatmap(
     imageRGBA: Mat,
     heatmap: Mat,
-    inplace: Boolean=false
+    heatmapColorAlloc: Mat? = null,
+    result_alloc: Mat? = null
 ): Mat{
-    val out_image = if (inplace) imageRGBA else Mat()
+    val out_image = result_alloc ?: Mat()
     imageRGBA.convertTo(out_image, CvType.CV_32FC4)
-    Core.multiply(out_image, heatmapToColorHeatmap(heatmap, inplace=inplace), out_image)
+    Core.multiply(out_image, heatmapToColorHeatmap(heatmap, colourHeatmapAlloc = heatmapColorAlloc), out_image)
     out_image.convertTo(out_image, CvType.CV_8UC3)
     return out_image
 }

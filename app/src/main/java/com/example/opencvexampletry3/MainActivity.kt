@@ -111,8 +111,8 @@ class MainActivity : Activity(), OnTouchListener, CvCameraViewListener2 {
     override fun onTouch(v: View, event: MotionEvent): Boolean {
         val cols = mRgba!!.cols()
         val rows = mRgba!!.rows()
-        val xOffset = (mOpenCvCameraView!!.width - cols) / 2
-        val yOffset = (mOpenCvCameraView!!.height - rows) / 2
+        val xOffset = (v.width - cols) / 2
+        val yOffset = (v.height - rows) / 2
         val x = event.x.toInt() - xOffset
         val y = event.y.toInt() - yOffset
         Log.i(TAG, "Touch image coordinates: ($x, $y)")
