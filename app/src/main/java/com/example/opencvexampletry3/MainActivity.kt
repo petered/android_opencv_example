@@ -1,23 +1,23 @@
 package com.example.opencvexampletry3
 
 import android.app.Activity
-import android.view.View.OnTouchListener
-import org.opencv.android.CameraBridgeViewBase.CvCameraViewListener2
-import com.example.opencvexampletry3.ColorBlobDetector
-import org.opencv.android.CameraBridgeViewBase
-import org.opencv.android.BaseLoaderCallback
-import org.opencv.android.LoaderCallbackInterface
-import com.example.opencvexampletry3.MainActivity
 import android.os.Bundle
 import android.util.Log
 import android.view.*
-import com.example.opencvexampletry3.R
-import org.opencv.android.OpenCVLoader
-import org.opencv.imgproc.Imgproc
+import android.view.View.OnTouchListener
+import org.bytedeco.librealsense.global.RealSense.camera
+import org.opencv.android.BaseLoaderCallback
+import org.opencv.android.CameraBridgeViewBase
 import org.opencv.android.CameraBridgeViewBase.CvCameraViewFrame
+import org.opencv.android.CameraBridgeViewBase.CvCameraViewListener2
+import org.opencv.android.LoaderCallbackInterface
+import org.opencv.android.OpenCVLoader
 import org.opencv.core.*
-import org.jetbrains.kotlinx.multik.api.*
-import org.jetbrains.kotlinx.multik.api.math.Math as mkmath
+import org.opencv.imgproc.Imgproc
+import android.hardware.Camera
+
+
+//import org.jetbrains.kotlinx.multik.api.math.Math as mkmath
 
 //import org.jetbrains.kotlinx.multik
 
@@ -56,8 +56,18 @@ class MainActivity : Activity(), OnTouchListener, CvCameraViewListener2 {
         mOpenCvCameraView =
             findViewById<View>(R.id.color_blob_detection_activity_surface_view) as CameraBridgeViewBase
         mOpenCvCameraView!!.visibility = SurfaceView.VISIBLE
+//        mOpenCvCameraView!!.rotation = 270f
         mOpenCvCameraView!!.setCvCameraViewListener(this)
+
     }
+
+
+//    fun surfaceDestroyed(holder: SurfaceHolder?) {
+//        camera.stopPreview()
+//        camera.release()
+//        camera = null
+//        previewing = false
+//    }
 
     public override fun onPause() {
         super.onPause()
@@ -158,24 +168,75 @@ class MainActivity : Activity(), OnTouchListener, CvCameraViewListener2 {
 //            val color_transform = Mat(4, 4, CvType.CV_64F, Scalar(doubleArrayOf(1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0)))
 //            val outputImage = Mat()
 //            val gray_image = Mat(mRgba_certain.size(), CvType.CV_64FC4)
+
+//            val out_image = Mat()
+//            val out_image = Mat()
+
+
             val out_image = Mat(mRgba_certain.size(), CvType.CV_64F)
             Imgproc.cvtColor(mRgba_certain, out_image, Imgproc.COLOR_RGB2HSV_FULL)
 
-            val gray_image = Mat(mRgba_certain.size(), CvType.CV_64FC4)
-            val color_transform = Mat(4, 4, CvType.CV_64F, Scalar(0.0))
-//            val color_transform = Mat.d
-            color_transform.put(0, 0, filter[0])
-            color_transform.put(1, 1, filter[1])
-            color_transform.put(2, 2, filter[2])
-            color_transform.put(3, 3, 1.0)
+//            val gray_image = Mat(mRgba_certain.size(), CvType.CV_64FC4)
+//            val color_transform = Mat(4, 4, CvType.CV_64F, Scalar(0.0))
+////            val color_transform = Mat.d
+//            color_transform.put(0, 0, filter[0])
+//            color_transform.put(1, 1, filter[1])
+//            color_transform.put(2, 2, filter[2])
+//            color_transform.put(3, 3, 1.0)
+//            Imgproc.cvtColor(mRgba_certain, gray_image, Imgproc.COLOR_RGB2GRAY)
+//            Imgproc.cvtColor(gray_image, gray_image, Imgproc.COLOR_GRAY2RGB)
+
+//            out_image
+
+//            val a = mk.ndarray(mk[1, 2, 3])
+//
+//            println("here: $a")
+
+//            val dumped = mRgba_certain.dump()
+//            val a2 = Nd4j.zeros(2, 3)
+//
+//            extractCh
+//            extractCh
+
+//            target_hue = scalar_convert_color(mBlobColorHsv)
 
 
-            Imgproc.cvtColor(mRgba_certain, gray_image, Imgproc.COLOR_RGB2GRAY)
-            Imgproc.cvtColor(gray_image, gray_image, Imgproc.COLOR_GRAY2RGB)
 
-            val a = mk.ndarray(mk[1, 2, 3])
+            val hue_img = Mat(mRgba_certain.size(), CvType.CV_64F)
+            Core.extractChannel(out_image, hue_img, 0)
+            hue_img.convertTo(hue_img, CvType.CV_32F)
+//            Core.subtract(hue_img, Scalar(100.0), hue_img)
+//            val target_hue = mBlobColorHsv!!.`val`[0]
 
-            println("here: $a")
+
+//            val target_hue = 20.0
+            val target_hue = scalar_convert_color(mBlobColorRgba!!, Imgproc.COLOR_RGB2HSV_FULL).`val`[0]
+            println("Target Hue: $target_hue")
+            Core.absdiff(hue_img, Scalar(target_hue), hue_img)
+            Core.divide(hue_img, Scalar(-10.0), hue_img)
+            Core.exp(hue_img, hue_img)
+
+//            Core.multiply(hue_img, Scalar(255.0), hue_img)
+//            hue_img.convertTo(out_image, CvType.CV_8UC3)
+            Imgproc.cvtColor(hue_img, hue_img, Imgproc.COLOR_GRAY2RGBA)  // Just  copy channel
+            hue_img.convertTo(hue_img, CvType.CV_32FC4)
+
+            mRgba_certain.convertTo(out_image, CvType.CV_32FC4)
+            Core.multiply(out_image, hue_img, out_image)
+            out_image.convertTo(out_image, CvType.CV_8UC3)
+//            val out_image =
+
+//            val real_out_image = Mat.zeros(mRgba_certain.size(), CvType.CV_8UC3)
+
+
+//            Core.multiply(mRgba_certain, hue_img, out_image)
+//
+            println("Here")
+
+//            val loader = NativeImageLoader()
+//            val arr = loader.asMatrix(out_image)
+//            val hue = arr[NDArrayIndex.point(0), NDArrayIndex.point(0)]
+//            println("nd4j array hape: ${arr.shape()}")
 
 //            MultiK
 //            Core.multiply(mRgba_certain, gray_image, mRgba_certain)
@@ -204,7 +265,7 @@ class MainActivity : Activity(), OnTouchListener, CvCameraViewListener2 {
 //            colorLabel.setTo(mBlobColorRgba)
             val spectrumLabel = mRgba!!.submat(4, 4 + mSpectrum!!.rows(), 70, 70 + mSpectrum!!.cols())
             mSpectrum!!.copyTo(spectrumLabel)
-            return gray_image
+            return out_image
         }
         return mRgba!!
     }
@@ -223,4 +284,13 @@ class MainActivity : Activity(), OnTouchListener, CvCameraViewListener2 {
     init {
         Log.i(TAG, "Instantiated new " + this.javaClass)
     }
+}
+
+fun scalar_convert_color(color: Scalar, code: Int): Scalar{
+
+    val original = Mat(1, 1, CvType.CV_8UC3, color)
+    val outmat = Mat()
+    Imgproc.cvtColor(original, outmat, code)
+    return Scalar(outmat.get(0, 0))
+
 }
