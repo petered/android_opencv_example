@@ -1,4 +1,4 @@
-# Android OpenCV Example
+# Android OpenCV example in Kotlin
 
 This sample android app shows a simple interactive image filter with OpenCV.  
 
