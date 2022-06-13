@@ -17,7 +17,7 @@ import org.opencv.core.*
 class MainActivity : Activity(), OnTouchListener, CvCameraViewListener2 {
 
     private var mRgba: Mat? = null
-    private var mDetector: ColorBlobDetector? = null
+    private var hueFilter: HueFilter? = null
     private var mOpenCvCameraView: CameraBridgeViewBase? = null
     private val mLoaderCallback: BaseLoaderCallback = object : BaseLoaderCallback(this) {
         override fun onManagerConnected(status: Int) {
@@ -47,10 +47,7 @@ class MainActivity : Activity(), OnTouchListener, CvCameraViewListener2 {
         mOpenCvCameraView!!.setCvCameraViewListener(this)
         mOpenCvCameraView!!.setCameraPermissionGranted()  // Huh - this line was the magic line
         println("=== OnCreate finished")
-
     }
-
-    private var colourFilter: HueFilter? = null
 
     public override fun onPause() {
         super.onPause()
@@ -76,7 +73,6 @@ class MainActivity : Activity(), OnTouchListener, CvCameraViewListener2 {
     override fun onCameraViewStarted(width: Int, height: Int) {
         print("=== CAMERA VIEW STARTED ===")
         mRgba = Mat(height, width, CvType.CV_8UC4)
-        mDetector = ColorBlobDetector()
     }
 
     override fun onCameraViewStopped() {
@@ -85,9 +81,8 @@ class MainActivity : Activity(), OnTouchListener, CvCameraViewListener2 {
 
     override fun onTouch(v: View, event: MotionEvent): Boolean {
 
-        if (colourFilter != null) {
-//            colourFilter!!.release()  # Causes some bug.
-            colourFilter = null
+        if (hueFilter != null) {
+            hueFilter = null
             return false
         }
         else{
@@ -106,7 +101,7 @@ class MainActivity : Activity(), OnTouchListener, CvCameraViewListener2 {
             touchedRect.width = if (x + 4 < cols) x + 4 - touchedRect.x else cols - touchedRect.x
             touchedRect.height = if (y + 4 < rows) y + 4 - touchedRect.y else rows - touchedRect.y
             val touchedRegionRgba = mRgba!!.submat(touchedRect)
-            colourFilter = HueFilter.fromPatch(touchedRegionRgba)
+            hueFilter = HueFilter.fromPatch(touchedRegionRgba)
             return false
         }
 
@@ -117,7 +112,7 @@ class MainActivity : Activity(), OnTouchListener, CvCameraViewListener2 {
 
 
         mRgba = inputFrame.rgba()
-        return colourFilter?.filter_rgb_image(mRgba!!) ?: mRgba!!
+        return hueFilter?.filterRGBImage(mRgba!!) ?: mRgba!!
     }
 
     companion object {

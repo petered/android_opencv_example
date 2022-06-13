@@ -7,11 +7,24 @@ import org.opencv.core.Scalar
 import org.opencv.imgproc.Imgproc
 
 
+/**
+Pixelwise filter applied to an image that filters in pixels that match the selected hue (darkening
+pixels with more distant hues).
+NOTE: Initializing this class repeatedly will cause a memory leak.  To avoid this, you need to
+ call mat.release() on the internally allocated arrays (outImageAlloc etc)
+ **/
 class HueFilter(
-    val huePeak: Double,
-    val hueWidth: Double = 10.0,
+    private val huePeak: Double,
+    private val hueWidth: Double = 10.0,
     ) {
 
+    // The below arrays are class members instead of local because opencv is not garbage collected
+    // so we need to manually make sure we reuse the same memory with each call to filterRGBImage
+    private var outImageAlloc: Mat = Mat()
+    private var heatMapAlloc: Mat = Mat()
+    private var heatmapColorAlloc: Mat = Mat()
+
+    /** Secondary constructor allowing you to get filter params from an image patch **/
     companion object {
         fun fromPatch(patchRgba: Mat): HueFilter{
             val touchedRegionHsv = Mat()
@@ -27,44 +40,32 @@ class HueFilter(
     }
 
     /** Filters the RGB image, returning another image where the selected color is highlighted */
-    fun filter_rgb_image(imageRGB: Mat): Mat{
+    fun filterRGBImage(imageRGB: Mat): Mat {
         val imageHSV = outImageAlloc
         Imgproc.cvtColor(imageRGB, imageHSV, Imgproc.COLOR_RGB2HSV_FULL)
         Core.extractChannel(imageHSV, heatMapAlloc, 0)
-        val hue_heatmap = distanceImageToHeatmap(heatMapAlloc!!, peakValue = huePeak, width=hueWidth, inplace = true)
-        val result = shadeImageByHeatmap(imageRGBA = imageRGB, heatmap = hue_heatmap,
-            result_alloc = outImageAlloc, heatmapColorAlloc = heatmapColorAlloc)
-        return result
-    }
-
-    // Below is code that we need
-    private var outImageAlloc: Mat? = null
-    private var heatMapAlloc: Mat? = null
-    private var heatmapColorAlloc: Mat? = null
-    init {
-        println("=== Allocation: $outImageAlloc")
-        outImageAlloc = Mat()
-        heatMapAlloc = Mat()
-        heatmapColorAlloc = Mat()
-    }
-
-    /* Unfortunately, garbage collector does not work on OpenCV Mats, so we need to be sure to
-    manually release the memory to avoid leaks. */
-    fun release(){
-        outImageAlloc?.release()
-        heatMapAlloc?.release()
-        heatmapColorAlloc?.release()
+        val hueHeatmap = valueImageToClosenessHeatmap(
+            heatMapAlloc,
+            peakValue = huePeak,
+            width = hueWidth,
+            inplace = true
+        )
+        return shadeImageByHeatmap(
+            imageRGBA = imageRGB, heatmap = hueHeatmap,
+            result_alloc = outImageAlloc, heatmapColorAlloc = heatmapColorAlloc
+        )
     }
 }
 
 
-fun distanceImageToHeatmap(singleChannelImage: Mat, peakValue: Double, width: Double, inplace: Boolean = false): Mat{
-    val heatmap_image = if (inplace) singleChannelImage else Mat()
-    singleChannelImage.convertTo(heatmap_image, CvType.CV_32F)
-    Core.absdiff(heatmap_image, Scalar(peakValue), heatmap_image)
-    Core.divide(heatmap_image, Scalar(-width), heatmap_image)
-    Core.exp(heatmap_image, heatmap_image)
-    return heatmap_image
+/** Take a single-channel image representing some value, and get the closeness to a target value (max one) **/
+fun valueImageToClosenessHeatmap(singleChannelImage: Mat, peakValue: Double, width: Double, inplace: Boolean = false): Mat{
+    val heatmapImage = if (inplace) singleChannelImage else Mat()
+    singleChannelImage.convertTo(heatmapImage, CvType.CV_32F)
+    Core.absdiff(heatmapImage, Scalar(peakValue), heatmapImage)
+    Core.divide(heatmapImage, Scalar(-width), heatmapImage)
+    Core.exp(heatmapImage, heatmapImage)
+    return heatmapImage
 }
 
 
@@ -83,9 +84,9 @@ fun shadeImageByHeatmap(
     heatmapColorAlloc: Mat? = null,
     result_alloc: Mat? = null
 ): Mat{
-    val out_image = result_alloc ?: Mat()
-    imageRGBA.convertTo(out_image, CvType.CV_32FC4)
-    Core.multiply(out_image, heatmapToColorHeatmap(heatmap, colourHeatmapAlloc = heatmapColorAlloc), out_image)
-    out_image.convertTo(out_image, CvType.CV_8UC3)
-    return out_image
+    val outImage = result_alloc ?: Mat()
+    imageRGBA.convertTo(outImage, CvType.CV_32FC4)
+    Core.multiply(outImage, heatmapToColorHeatmap(heatmap, colourHeatmapAlloc = heatmapColorAlloc), outImage)
+    outImage.convertTo(outImage, CvType.CV_8UC3)
+    return outImage
 }
