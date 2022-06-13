@@ -5,7 +5,6 @@ import android.os.Bundle
 import android.util.Log
 import android.view.*
 import android.view.View.OnTouchListener
-import org.bytedeco.librealsense.global.RealSense.camera
 import org.opencv.android.BaseLoaderCallback
 import org.opencv.android.CameraBridgeViewBase
 import org.opencv.android.CameraBridgeViewBase.CvCameraViewFrame
@@ -58,6 +57,7 @@ class MainActivity : Activity(), OnTouchListener, CvCameraViewListener2 {
         mOpenCvCameraView!!.visibility = SurfaceView.VISIBLE
 //        mOpenCvCameraView!!.rotation = 270f
         mOpenCvCameraView!!.setCvCameraViewListener(this)
+        println("=== OnCreate finished")
 
     }
 
@@ -91,6 +91,7 @@ class MainActivity : Activity(), OnTouchListener, CvCameraViewListener2 {
     }
 
     override fun onCameraViewStarted(width: Int, height: Int) {
+        print("=== CAMERA VIEW STARTED ===")
         mRgba = Mat(height, width, CvType.CV_8UC4)
         mDetector = ColorBlobDetector()
         mSpectrum = Mat()
