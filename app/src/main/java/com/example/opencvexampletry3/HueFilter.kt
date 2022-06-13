@@ -7,33 +7,21 @@ import org.opencv.core.Scalar
 import org.opencv.imgproc.Imgproc
 
 
-class HueSaturationFilter(
+class HueFilter(
     val huePeak: Double,
-    val satPeak: Double,
     val hueWidth: Double = 10.0,
-    val satWidth: Double = 30.0,
     ) {
 
-    private var outImageAlloc: Mat? = null
-    private var heatMapAlloc: Mat? = null
-    private var heatmapColorAlloc: Mat? = null
-    init {
-        outImageAlloc = Mat()
-        heatMapAlloc = Mat()
-        heatmapColorAlloc = Mat()
-    }
-
     companion object {
-        fun fromPatch(patchRgba: Mat): HueSaturationFilter{
+        fun fromPatch(patchRgba: Mat): HueFilter{
             val touchedRegionHsv = Mat()
             Imgproc.cvtColor(patchRgba, touchedRegionHsv, Imgproc.COLOR_RGB2HSV_FULL)
             val patchHue = Mat()
             val patchSat = Mat()
             Core.extractChannel(touchedRegionHsv, patchHue, 0)
             Core.extractChannel(touchedRegionHsv, patchSat, 1)
-            return HueSaturationFilter(
+            return HueFilter(
                 huePeak = Core.mean(patchHue).`val`[0],
-                satPeak = Core.mean(patchSat).`val`[1]
             )
         }
     }
@@ -48,10 +36,29 @@ class HueSaturationFilter(
             result_alloc = outImageAlloc, heatmapColorAlloc = heatmapColorAlloc)
         return result
     }
+
+    // Below is code that we need
+    private var outImageAlloc: Mat? = null
+    private var heatMapAlloc: Mat? = null
+    private var heatmapColorAlloc: Mat? = null
+    init {
+        println("=== Allocation: $outImageAlloc")
+        outImageAlloc = Mat()
+        heatMapAlloc = Mat()
+        heatmapColorAlloc = Mat()
+    }
+
+    /* Unfortunately, garbage collector does not work on OpenCV Mats, so we need to be sure to
+    manually release the memory to avoid leaks. */
+    fun release(){
+        outImageAlloc?.release()
+        heatMapAlloc?.release()
+        heatmapColorAlloc?.release()
+    }
 }
 
-fun distanceImageToHeatmap(singleChannelImage: Mat, peakValue: Double, width: Double, inplace: Boolean = false): Mat{
 
+fun distanceImageToHeatmap(singleChannelImage: Mat, peakValue: Double, width: Double, inplace: Boolean = false): Mat{
     val heatmap_image = if (inplace) singleChannelImage else Mat()
     singleChannelImage.convertTo(heatmap_image, CvType.CV_32F)
     Core.absdiff(heatmap_image, Scalar(peakValue), heatmap_image)

@@ -12,8 +12,6 @@ import org.opencv.android.CameraBridgeViewBase.CvCameraViewListener2
 import org.opencv.android.LoaderCallbackInterface
 import org.opencv.android.OpenCVLoader
 import org.opencv.core.*
-import org.opencv.imgproc.Imgproc
-import android.hardware.Camera
 
 
 class MainActivity : Activity(), OnTouchListener, CvCameraViewListener2 {
@@ -47,11 +45,12 @@ class MainActivity : Activity(), OnTouchListener, CvCameraViewListener2 {
             findViewById<View>(R.id.color_blob_detection_activity_surface_view) as CameraBridgeViewBase
         mOpenCvCameraView!!.visibility = SurfaceView.VISIBLE
         mOpenCvCameraView!!.setCvCameraViewListener(this)
+        mOpenCvCameraView!!.setCameraPermissionGranted()  // Huh - this line was the magic line
         println("=== OnCreate finished")
 
     }
 
-    private var colourFilter: HueSaturationFilter? = null
+    private var colourFilter: HueFilter? = null
 
     public override fun onPause() {
         super.onPause()
@@ -85,27 +84,41 @@ class MainActivity : Activity(), OnTouchListener, CvCameraViewListener2 {
     }
 
     override fun onTouch(v: View, event: MotionEvent): Boolean {
-        val cols = mRgba!!.cols()
-        val rows = mRgba!!.rows()
-        val xOffset = (v.width - cols) / 2
-        val yOffset = (v.height - rows) / 2
-        val x = event.x.toInt() - xOffset
-        val y = event.y.toInt() - yOffset
-        Log.i(TAG, "Touch image coordinates: ($x, $y)")
-        if (x < 0 || y < 0 || x > cols || y > rows) return false
-        val touchedRect = Rect()
-        touchedRect.x = if (x > 4) x - 4 else 0
-        touchedRect.y = if (y > 4) y - 4 else 0
 
-        println("Touchloc = ${touchedRect.x}, ${touchedRect.y}")
-        touchedRect.width = if (x + 4 < cols) x + 4 - touchedRect.x else cols - touchedRect.x
-        touchedRect.height = if (y + 4 < rows) y + 4 - touchedRect.y else rows - touchedRect.y
-        val touchedRegionRgba = mRgba!!.submat(touchedRect)
-        colourFilter = HueSaturationFilter.fromPatch(touchedRegionRgba)
-        return false
+        if (colourFilter != null) {
+            colourFilter = null
+            return false
+        }
+        else{
+            val cols = mRgba!!.cols()
+            val rows = mRgba!!.rows()
+            val xOffset = (v.width - cols) / 2
+            val yOffset = (v.height - rows) / 2
+            val x = event.x.toInt() - xOffset
+            val y = event.y.toInt() - yOffset
+            Log.i(TAG, "Touch image coordinates: ($x, $y)")
+            if (x < 0 || y < 0 || x > cols || y > rows) return false
+            val touchedRect = Rect()
+            touchedRect.x = if (x > 4) x - 4 else 0
+            touchedRect.y = if (y > 4) y - 4 else 0
+
+            val localref = colourFilter
+            colourFilter = null
+            localref?.release()  // Need to release memory from old filter if applicable
+            println("Touchloc = ${touchedRect.x}, ${touchedRect.y}")
+            touchedRect.width = if (x + 4 < cols) x + 4 - touchedRect.x else cols - touchedRect.x
+            touchedRect.height = if (y + 4 < rows) y + 4 - touchedRect.y else rows - touchedRect.y
+            val touchedRegionRgba = mRgba!!.submat(touchedRect)
+            colourFilter = HueFilter.fromPatch(touchedRegionRgba)
+            return false
+        }
+
     }
 
     override fun onCameraFrame(inputFrame: CvCameraViewFrame): Mat {
+
+
+
         mRgba = inputFrame.rgba()
         return colourFilter?.filter_rgb_image(mRgba!!) ?: mRgba!!
     }
