@@ -19,10 +19,10 @@ TODO: Verify that this works
 2) Download the latest OpenCV for Android release from [this page](https://opencv.org/releases/), unpack it somehwhere.
 3) Open `/path/to/android_opencv_example/` repo in Android studio
 4) Import OpenCV into your project with `File -> New -> Import Module -> (select /path/to/opencv_folder/sdk)`, naming it, for example `opencv455`
-5) Add OpenCV as an app dependency with `File -> Project Structure -> app -> Dependencies -> "+" -> `opencv455`
+5) Add OpenCV as an app dependency with `File -> Project Structure -> app -> Dependencies -> "+" -> opencv455`
 6) Connect your phone to computer, with USB-debugging enabled. 
 7) Build and run app - it should pop up on your phone
-8) Probably, no image will appear.  That's because you need to add camera permissions (this app is not set up to ask for them).  On your android phone, find "Permissions Manager -> Camera -> (Add current app).
+8) Probably, no image will appear.  That's because you need to add camera permissions (this app is not set up to ask for them).  On your android phone, find "Permissions Manager -> Camera -> (Add this app).
 9) Now camera feed should come in.  Click the screen and see filtering work.
 
 
