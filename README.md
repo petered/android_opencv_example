@@ -16,7 +16,7 @@ It is modified from Elvis Chidera's [tutorial](https://medium.com/android-news/a
 TODO: Verify that this works
 
 1) Clone this repo: `git clone git@github.com:petered/android_opencv_example.git`
-2) Download the latest OpenCV for Android release from [this page]([url](https://opencv.org/releases/)), unpack it somehwhere.
+2) Download the latest OpenCV for Android release from [this page](https://opencv.org/releases/), unpack it somehwhere.
 3) Open `/path/to/android_opencv_example/` repo in Android studio
 4) Import OpenCV into your project with `File -> New -> Import Module -> (select /path/to/opencv_folder/sdk)`, naming it, for example `opencv455`
 5) Add OpenCV as an app dependency with `File -> Project Structure -> app -> Dependencies -> "+" -> `opencv455`
