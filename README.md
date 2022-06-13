@@ -1,8 +1,12 @@
 # Android OpenCV example in Kotlin
 
-This sample android app shows a simple interactive image filter with OpenCV.  
+This sample android app shows a simple interactive image filter with OpenCV.  It displays image from your phone's camera.  You start the app, click on the image, and the colour that you clicked on will be highlighted.
 
-You start the app, click on the image, and the colour that you clicked on will be highlighted.
+
+Screenshots: 
+![Screenshot_20220613-155732_OpenCVExampleTry3](https://user-images.githubusercontent.com/1148799/173461136-45405b69-e731-4243-858d-230bdbc802ed.jpg)
+![Screenshot_20220613-155740_OpenCVExampleTry3](https://user-images.githubusercontent.com/1148799/173461234-b9b9d6e6-77c6-429d-9491-a619d8216ff3.jpg)
+![Screenshot_20220613-155746_OpenCVExampleTry3](https://user-images.githubusercontent.com/1148799/173461239-083408cb-0b1a-4728-9150-36bdd6563177.jpg)
 
 It is modified from Elvis Chidera's [tutorial](https://medium.com/android-news/a-beginners-guide-to-setting-up-opencv-android-library-on-android-studio-19794e220f3c) on setting up OpenCV on Android.
 
@@ -21,10 +25,6 @@ TODO: Verify that this works
 8) Probably, no image will appear.  That's because you need to add camera permissions (this app is not set up to ask for them).  On your android phone, find "Permissions Manager -> Camera -> (Add current app).
 9) Now camera feed should come in.  Click the screen and see filtering work.
 
-Screenshots: 
-![Screenshot_20220613-155732_OpenCVExampleTry3](https://user-images.githubusercontent.com/1148799/173461136-45405b69-e731-4243-858d-230bdbc802ed.jpg)
-![Screenshot_20220613-155740_OpenCVExampleTry3](https://user-images.githubusercontent.com/1148799/173461234-b9b9d6e6-77c6-429d-9491-a619d8216ff3.jpg)
-![Screenshot_20220613-155746_OpenCVExampleTry3](https://user-images.githubusercontent.com/1148799/173461239-083408cb-0b1a-4728-9150-36bdd6563177.jpg)
 
 ## Notes
 
