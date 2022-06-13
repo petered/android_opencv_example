@@ -86,6 +86,7 @@ class MainActivity : Activity(), OnTouchListener, CvCameraViewListener2 {
     override fun onTouch(v: View, event: MotionEvent): Boolean {
 
         if (colourFilter != null) {
+//            colourFilter!!.release()  # Causes some bug.
             colourFilter = null
             return false
         }
@@ -101,10 +102,6 @@ class MainActivity : Activity(), OnTouchListener, CvCameraViewListener2 {
             val touchedRect = Rect()
             touchedRect.x = if (x > 4) x - 4 else 0
             touchedRect.y = if (y > 4) y - 4 else 0
-
-            val localref = colourFilter
-            colourFilter = null
-            localref?.release()  // Need to release memory from old filter if applicable
             println("Touchloc = ${touchedRect.x}, ${touchedRect.y}")
             touchedRect.width = if (x + 4 < cols) x + 4 - touchedRect.x else cols - touchedRect.x
             touchedRect.height = if (y + 4 < rows) y + 4 - touchedRect.y else rows - touchedRect.y
