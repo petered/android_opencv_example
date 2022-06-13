@@ -4,7 +4,7 @@ This sample android app shows a simple interactive image filter with OpenCV.
 
 You start the app, click on the image, and the colour that you clicked on will be highlighted.
 
-It is modified from Elvis Chidera's [tutorial]([url](https://medium.com/android-news/a-beginners-guide-to-setting-up-opencv-android-library-on-android-studio-19794e220f3c)) on setting up OpenCV on Android.
+It is modified from Elvis Chidera's [tutorial](https://medium.com/android-news/a-beginners-guide-to-setting-up-opencv-android-library-on-android-studio-19794e220f3c) on setting up OpenCV on Android.
 
 
 ## Setup
